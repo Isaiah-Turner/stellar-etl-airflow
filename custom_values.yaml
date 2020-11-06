@@ -25,7 +25,7 @@ airflow:
   ##     - `AIRFLOW__KUBERNETES__WORKER_SERVICE_ACCOUNT_NAME`
   ##     - `AIRFLOW__KUBERNETES__ENV_FROM_CONFIGMAP_REF`
   ##
-  executor: CeleryExecutor
+  executor: KubernetesExecutor
 
   ## the fernet key used to encrypt the connections/variables in the database
   ##
@@ -523,7 +523,7 @@ web:
 workers:
   ## if the airflow workers StatefulSet should be deployed
   ##
-  enabled: true
+  enabled: false
 
   ## resource requests/limits for the airflow worker Pods
   ##
@@ -687,7 +687,7 @@ flower:
   ## NOTE:
   ## - only takes effect if `airflow.executor` is `CeleryExecutor`
   ##
-  enabled: true
+  enabled: false
 
   ## resource requests/limits for the flower Pods
   ##
@@ -1400,7 +1400,7 @@ redis:
   ## - set to `false` if using an external redis database
   ## - set to `false` if `airflow.executor` is `KubernetesExecutor`
   ##
-  enabled: true
+  enabled: false
 
   ## the redis password
   ##
