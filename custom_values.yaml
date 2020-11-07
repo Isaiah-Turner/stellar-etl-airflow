@@ -25,12 +25,12 @@ airflow:
   ##     - `AIRFLOW__KUBERNETES__WORKER_SERVICE_ACCOUNT_NAME`
   ##     - `AIRFLOW__KUBERNETES__ENV_FROM_CONFIGMAP_REF`
   ##
-  executor: KubernetesExecutor
+  executor: CeleryExecutor
 
   ## the fernet key used to encrypt the connections/variables in the database
   ##
   ## WARNING:
-  ## - you MUST customise this value, otherwise the encryption will be somewhat pointless
+  ## - you MUST customize this value, otherwise the encryption will be somewhat pointless
   ##
   ## NOTE:
   ## - to prevent this value being stored in your values.yaml (and airflow-env ConfigMap),
@@ -79,7 +79,8 @@ airflow:
   ##     ## Proxy Config
   ##     HTTP_PROXY: "http://proxy.example.com:8080"
   ##
-  config: {}
+  config: 
+    AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: "False"
 
   ## extra annotations for the web/scheduler/worker Pods
   ##
@@ -239,7 +240,20 @@ scheduler:
   ##           "region_name":"eu-central-1"
   ##         }
   ##
-  connections: []
+  connections: 
+    - id: google_cloud_platform_connection
+      type: google_cloud_platform
+      extra: |
+        {
+          "extra__google_cloud_platform__key_path": "<GCP_KEYFILE_PATH>", 
+          "extra__google_cloud_platform__project": "<GCP_PROJECT_ID>"
+        }
+    - id: fs_default
+      type: fs
+      extra: |
+        {
+          "path": "/"
+        }
 
   ## if `scheduler.connections` are deleted and re-added after each scheduler restart
   ##
@@ -283,7 +297,48 @@ scheduler:
   ##     { "environment": "dev" }
   ##
   variables: |
-    {}
+    {
+      "api_key_path": "/home/airflow/gcs/data/apiKey.json",
+      "bq_dataset": "test_dataset",
+      "bq_project": "stellar-testing-281223",
+      "gcs_bucket_name": "us-east1-etl-testing-2fca78f7-bucket",
+      "gcs_exported_data_bucket_name": "stellar-testing-us",
+      "image_name": "stellar/stellar-etl:latest",
+      "image_output_path": "/etl/exported_data/",
+      "local_output_path": "/home/airflow/etlData/",
+      "namespace": "default",
+      "output_file_names": {
+          "accounts": "accounts.txt",
+          "changes": "changes_folder",
+          "dimAccounts": "dimAccounts.txt",
+          "dimMarkets": "dimMarkets.txt",
+          "dimOffers": "dimOffers.txt",
+          "factEvents": "factEvents.txt",
+          "ledgers": "ledgers.txt",
+          "offers": "offers.txt",
+          "operations": "operations.txt",
+          "orderbooks": "orderbook_folder",
+          "trades": "trades.txt",
+          "transactions": "transactions.txt",
+          "trustlines": "trustlines.txt"
+      },
+      "output_path": "/home/airflow/gcs/data/",
+      "owner": "SDF",
+      "pool_name": "default-pool",
+      "table_ids": {
+          "accounts": "acc_table",
+          "dimAccounts": "dim_accounts",
+          "dimMarkets": "dim_markets",
+          "dimOffers": "dim_offers",
+          "factEvents": "fact_offer_events",
+          "ledgers": "ledger_table",
+          "offers": "off_table",
+          "operations": "op_table",
+          "trades": "trade_table",
+          "transactions": "tx_table",
+          "trustlines": "trust_table"
+      }
+    }
 
   ## custom airflow pools for the airflow scheduler
   ##
@@ -523,7 +578,7 @@ web:
 workers:
   ## if the airflow workers StatefulSet should be deployed
   ##
-  enabled: false
+  enabled: true
 
   ## resource requests/limits for the airflow worker Pods
   ##
@@ -687,7 +742,7 @@ flower:
   ## NOTE:
   ## - only takes effect if `airflow.executor` is `CeleryExecutor`
   ##
-  enabled: false
+  enabled: true
 
   ## resource requests/limits for the flower Pods
   ##
@@ -1400,7 +1455,7 @@ redis:
   ## - set to `false` if using an external redis database
   ## - set to `false` if `airflow.executor` is `KubernetesExecutor`
   ##
-  enabled: false
+  enabled: true
 
   ## the redis password
   ##
