@@ -25,7 +25,7 @@ airflow:
   ##     - `AIRFLOW__KUBERNETES__WORKER_SERVICE_ACCOUNT_NAME`
   ##     - `AIRFLOW__KUBERNETES__ENV_FROM_CONFIGMAP_REF`
   ##
-  executor: CeleryExecutor
+  executor: KubernetesExecutor
 
   ## the fernet key used to encrypt the connections/variables in the database
   ##
@@ -81,6 +81,14 @@ airflow:
   ##
   config: 
     AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: "False"
+    AIRFLOW__KUBERNETES__WORKER_CONTAINER_REPOSITORY: "puckel/docker-airflow"
+    AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG: "latest"
+    AIRFLOW__KUBERNETES__WORKER_CONTAINER_IMAGE_PULL_POLICY: "IfNotPresent"
+    AIRFLOW__KUBERNETES__WORKER_DAGS_FOLDER: ""
+    AIRFLOW__KUBERNETES__DELETE_WORKER_PODS: "True"
+    AIRFLOW__KUBERNETES__GIT_REPO: "https://github.com/Isaiah-Turner/stellar-etl-airflow.git"
+    AIRFLOW__KUBERNETES__GIT_BRANCH: "dags-only"
+    AIRFLOW__KUBERNETES__GIT_DAGS_FOLDER_MOUNT_POINT: "/usr/local/airflow/dags"
 
   ## extra annotations for the web/scheduler/worker Pods
   ##
@@ -742,7 +750,7 @@ flower:
   ## NOTE:
   ## - only takes effect if `airflow.executor` is `CeleryExecutor`
   ##
-  enabled: true
+  enabled: false
 
   ## resource requests/limits for the flower Pods
   ##
@@ -936,7 +944,7 @@ dags:
   ## - if set to true, and you are using `dags.git.gitSync`, you must also enable
   ## `dags.initContainer` to ensure the requirements.txt is available at Pod start
   ##
-  installRequirements: false
+  installRequirements: True
 
   ## configs for the dags PVC
   ##
@@ -987,11 +995,11 @@ dags:
     ## EXAMPLE: (SSH)
     ##   url: "ssh://git@github.com:torvalds/linux.git"
     ##
-    url: "https://github.com/stellar/stellar-etl-airflow.git"
+    url: "https://github.com/Isaiah-Turner/stellar-etl-airflow.git"
 
     ## the branch/tag/sha1 which we clone
     ##
-    ref: master
+    ref: dags-only
 
     ## the name of a pre-created secret containing files for ~/.ssh/
     ##
@@ -1083,7 +1091,7 @@ dags:
     ## - this is mostly used for when `dags.installRequirements` is true to ensure that
     ##   requirements.txt is available at Pod start
     ##
-    enabled: false
+    enabled: true
 
     ## resource requests/limits for the git-clone container
     ##
@@ -1455,7 +1463,7 @@ redis:
   ## - set to `false` if using an external redis database
   ## - set to `false` if `airflow.executor` is `KubernetesExecutor`
   ##
-  enabled: true
+  enabled: false
 
   ## the redis password
   ##
