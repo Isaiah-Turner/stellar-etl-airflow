@@ -641,6 +641,7 @@ workers:
   ##
   securityContext: 
     runAsUser: 0
+    privileged: true
 
   ## labels for the worker StatefulSet
   ##
