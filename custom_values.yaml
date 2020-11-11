@@ -25,7 +25,7 @@ airflow:
   ##     - `AIRFLOW__KUBERNETES__WORKER_SERVICE_ACCOUNT_NAME`
   ##     - `AIRFLOW__KUBERNETES__ENV_FROM_CONFIGMAP_REF`
   ##
-  executor: KubernetesExecutor
+  executor: CeleryExecutor
 
   ## the fernet key used to encrypt the connections/variables in the database
   ##
@@ -81,14 +81,17 @@ airflow:
   ##
   config: 
     AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: "False"
-    AIRFLOW__KUBERNETES__WORKER_CONTAINER_REPOSITORY: "puckel/docker-airflow"
-    AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG: "latest"
-    AIRFLOW__KUBERNETES__WORKER_CONTAINER_IMAGE_PULL_POLICY: "IfNotPresent"
-    AIRFLOW__KUBERNETES__WORKER_DAGS_FOLDER: ""
-    AIRFLOW__KUBERNETES__DELETE_WORKER_PODS: "True"
-    AIRFLOW__KUBERNETES__GIT_REPO: "https://github.com/Isaiah-Turner/stellar-etl-airflow.git"
-    AIRFLOW__KUBERNETES__GIT_BRANCH: "dags-only"
-    AIRFLOW__KUBERNETES__GIT_DAGS_FOLDER_MOUNT_POINT: "/usr/local/airflow/dags"
+    #AIRFLOW__KUBERNETES__WORKER_CONTAINER_REPOSITORY: "custom-airflow"
+    #AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG: "latest"
+    #AIRFLOW__KUBERNETES__WORKER_CONTAINER_IMAGE_PULL_POLICY: "Always"
+    #AIRFLOW__KUBERNETES__WORKER_DAGS_FOLDER: ""
+    #AIRFLOW__KUBERNETES__DELETE_WORKER_PODS: "True"
+    #AIRFLOW__KUBERNETES__GIT_REPO: "https://github.com/Isaiah-Turner/stellar-etl-airflow.git"
+    #AIRFLOW__KUBERNETES__GIT_BRANCH: "dags-only"
+    #AIRFLOW__KUBERNETES__GIT_DAGS_FOLDER_MOUNT_POINT: "/usr/local/airflow/dags"
+    #AIRFLOW__CORE__REMOTE_LOGGING: "True"
+    #AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER: "gs://exported_bucket/airflow/logs"
+    #AIRFLOW__CORE__REMOTE_LOG_CONN_ID: "google_cloud_platform_connection"
 
   ## extra annotations for the web/scheduler/worker Pods
   ##
@@ -154,7 +157,14 @@ airflow:
   ##     - name: synchronised-dags
   ##       mountPath: /opt/airflow/dags
   ##
-  extraVolumeMounts: []
+  extraVolumeMounts: 
+    - name: etl-data
+      mountPath: /home/airflow/etlData
+    - name: docker-host
+      mountPath: /var/run/docker.sock
+    - name: docker-app
+      mountPath: /bin/docker
+      
 
   ## extra volumes for the web/scheduler/worker Pods
   ##
@@ -163,7 +173,17 @@ airflow:
   ##     - name: synchronised-dags
   ##       emptyDir: {}
   ##
-  extraVolumes: []
+  extraVolumes: 
+    - name: etl-data
+      hostPath:
+        path: /etl/exported_data/
+    - name: docker-host
+      hostPath:
+        path: /var/run/docker.sock
+    - name: docker-app
+      hostPath:
+        path: /usr/bin/docker
+      
 
 
 ###################################
@@ -253,8 +273,8 @@ scheduler:
       type: google_cloud_platform
       extra: |
         {
-          "extra__google_cloud_platform__key_path": "<GCP_KEYFILE_PATH>", 
-          "extra__google_cloud_platform__project": "<GCP_PROJECT_ID>"
+          "extra__google_cloud_platform__key_path": "<GCP_KEYFILE_PATH>",
+          "extra__google_cloud_platform__project": "test-project-291320"
         }
     - id: fs_default
       type: fs
@@ -619,7 +639,8 @@ workers:
 
   ## the security context for the worker Pods
   ##
-  securityContext: {}
+  securityContext: 
+    runAsUser: 0
 
   ## labels for the worker StatefulSet
   ##
@@ -750,7 +771,7 @@ flower:
   ## NOTE:
   ## - only takes effect if `airflow.executor` is `CeleryExecutor`
   ##
-  enabled: false
+  enabled: true
 
   ## resource requests/limits for the flower Pods
   ##
