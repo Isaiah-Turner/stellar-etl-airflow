@@ -7,9 +7,6 @@ airflow:
   image:
     repository: apache/airflow
     tag: 1.10.12-python3.6
-    #repository: custom-airflow
-    #tag: latest
-    ## values: Always or IfNotPresent
     pullPolicy: IfNotPresent
     pullSecret: ""
 
@@ -83,17 +80,9 @@ airflow:
   ##
   config: 
     AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: "False"
-    #AIRFLOW__KUBERNETES__WORKER_CONTAINER_REPOSITORY: "custom-airflow"
-    #AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG: "latest"
-    #AIRFLOW__KUBERNETES__WORKER_CONTAINER_IMAGE_PULL_POLICY: "Always"
-    #AIRFLOW__KUBERNETES__WORKER_DAGS_FOLDER: ""
-    #AIRFLOW__KUBERNETES__DELETE_WORKER_PODS: "True"
-    #AIRFLOW__KUBERNETES__GIT_REPO: "https://github.com/Isaiah-Turner/stellar-etl-airflow.git"
-    #AIRFLOW__KUBERNETES__GIT_BRANCH: "dags-only"
-    #AIRFLOW__KUBERNETES__GIT_DAGS_FOLDER_MOUNT_POINT: "/usr/local/airflow/dags"
-    #AIRFLOW__CORE__REMOTE_LOGGING: "True"
-    #AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER: "gs://exported_bucket/airflow/logs"
-    #AIRFLOW__CORE__REMOTE_LOG_CONN_ID: "google_cloud_platform_connection"
+    AIRFLOW__CORE__REMOTE_LOGGING: "True"
+    AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER: "gs://exported_bucket/airflow/logs"
+    AIRFLOW__CORE__REMOTE_LOG_CONN_ID: "google_cloud_platform_connection"
 
   ## extra annotations for the web/scheduler/worker Pods
   ##
@@ -166,10 +155,6 @@ airflow:
   extraVolumeMounts: 
     - name: etl-data
       mountPath: /home/airflow/etlData
-    - name: docker-host
-      mountPath: /var/run/docker.sock
-    - name: docker-app
-      mountPath: /bin/docker
       
 
   ## extra volumes for the web/scheduler/worker Pods
@@ -280,7 +265,7 @@ scheduler:
       extra: |
         {
           "extra__google_cloud_platform__key_path": "<GCP_KEYFILE_PATH>",
-          "extra__google_cloud_platform__project": "test-project-291320"
+          "extra__google_cloud_platform__project": "hubble-261722"
         }
     - id: fs_default
       type: fs
@@ -360,7 +345,6 @@ scheduler:
       },
       "output_path": "/home/airflow/gcs/data/",
       "owner": "SDF",
-      "pool_name": "default-pool",
       "table_ids": {
           "accounts": "acc_table",
           "dimAccounts": "dim_accounts",
@@ -374,6 +358,7 @@ scheduler:
           "transactions": "tx_table",
           "trustlines": "trust_table"
       },
+      "use_kubernetes_pod_exporter": "False",
       "volume_claim_name": "etl-data-claim",
       "volume_name": "etl-data"
     }
