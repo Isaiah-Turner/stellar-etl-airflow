@@ -2,7 +2,7 @@ airflow:
     config: 
       AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: "False"
       AIRFLOW__CORE__REMOTE_LOGGING: "True"
-      AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER: "gs://exported_bucket/airflow/logs"
+      AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER: "gs://etl-airflow-data/airflow/logs"
       AIRFLOW__CORE__REMOTE_LOG_CONN_ID: "google_cloud_platform_connection"
   
     extraEnv:
@@ -71,7 +71,7 @@ airflow:
             "transactions": "transactions.txt",
             "trustlines": "trustlines.txt"
         },
-        "output_path": "/home/airflow/gcs/data/",
+        "output_path": "/home/airflow/etlData/",
         "owner": "SDF",
          "table_ids": {
           "accounts": "accounts",
