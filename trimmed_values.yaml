@@ -87,7 +87,11 @@ airflow:
           "trustlines": "trustlines"
         },
         "use_kubernetes_pod_exporter": "True",
-        "volume_claim_name": "",
+        "volume_config": {
+          "nfs": {
+            "path": "/", 
+            "server": "fs-8aa8067f.efs.us-east-1.amazonaws.com"}
+        },
         "volume_name": "etl-data"
       }
   
