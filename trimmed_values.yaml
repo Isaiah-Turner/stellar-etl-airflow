@@ -1,0 +1,152 @@
+airflow:
+    config: 
+      AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: "False"
+      AIRFLOW__CORE__REMOTE_LOGGING: "True"
+      AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER: "gs://exported_bucket/airflow/logs"
+      AIRFLOW__CORE__REMOTE_LOG_CONN_ID: "google_cloud_platform_connection"
+  
+    extraEnv:
+      - name: AIRFLOW__CORE__FERNET_KEY
+        valueFrom:
+          secretKeyRef:
+            name: fernet-key
+            key: value
+  
+    extraPipPackages: 
+      - "apache-airflow-backport-providers-docker==2020.10.29"
+      - "google_api_python_client==1.12.5"
+      - "protobuf==3.13.0"
+      - "six==1.15.0"
+  
+    extraVolumeMounts: 
+      - name: etl-data
+        mountPath: /home/airflow/etlData
+  
+    extraVolumes: 
+      - name: etl-data
+        nfs:
+          path: /
+          server: fs-8aa8067f.efs.us-east-1.amazonaws.com
+  
+  scheduler:
+    connections: 
+      - id: google_cloud_platform_connection
+        type: google_cloud_platform
+        extra: |
+          {
+            "extra__google_cloud_platform__key_path": "/var/airflow/secrets/gcp-creds/api-key.json",
+            "extra__google_cloud_platform__project": "hubble-261722"
+          }
+      - id: fs_default
+        type: fs
+        extra: |
+          {
+            "path": "/"
+          }
+  
+    variables: |
+      {
+        "affinity": "{}",
+        "api_key_path": "/var/airflow/secrets/gcp-creds/api-key.json",
+        "bq_dataset": "etl_airflow_internal",
+        "bq_project": "hubble-261722",
+        "gcs_exported_data_bucket_name": "etl-airflow-data",
+        "image_name": "stellar/stellar-etl:latest",
+        "image_output_path": "/etl/exported_data/",
+        "kube_config_location": "",
+        "local_output_path": "/home/airflow/etlData/",
+        "namespace": "airflow-dev",
+        "output_file_names": {
+            "accounts": "accounts.txt",
+            "changes": "changes_folder",
+            "dimAccounts": "dimAccounts.txt",
+            "dimMarkets": "dimMarkets.txt",
+            "dimOffers": "dimOffers.txt",
+            "factEvents": "factEvents.txt",
+            "ledgers": "ledgers.txt",
+            "offers": "offers.txt",
+            "operations": "operations.txt",
+            "orderbooks": "orderbook_folder",
+            "trades": "trades.txt",
+            "transactions": "transactions.txt",
+            "trustlines": "trustlines.txt"
+        },
+        "output_path": "/home/airflow/gcs/data/",
+        "owner": "SDF",
+         "table_ids": {
+          "accounts": "accounts",
+          "dimAccounts": "dim_accounts",
+          "dimMarkets": "dim_markets",
+          "dimOffers": "dim_offers",
+          "factEvents": "fact_offer_events",
+          "ledgers": "history_ledgers",
+          "offers": "offers",
+          "operations": "history_operations",
+          "trades": "history_trades",
+          "transactions": "history_transactions",
+          "trustlines": "trustlines"
+        },
+        "use_kubernetes_pod_exporter": "True",
+        "volume_claim_name": "",
+        "volume_name": "etl-data"
+      }
+  
+  web:
+    #baseUrl: https://airflow.dev.services.stellar-ops.com
+    baseUrl: http://airflow.kube001-dev.services.stellar-ops.com
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "0.5Gi"
+      limits:
+        cpu: "500m"
+        memory: "2Gi"
+  
+  workers:
+    ## Secrets Will be mounted as files at `/var/airflow/secrets/<secret_name>/<keys_in_secret>`
+    ##
+    secrets: [gcp-creds]
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "0.5Gi"
+      limits:
+        cpu: "500m"
+        memory: "2Gi"
+  
+  dags:
+    git:
+      url: "https://github.com/Isaiah-Turner/stellar-etl-airflow.git"
+      ref: dags-only
+      gitSync:
+        enabled: true
+  
+  # Services are behing oauthproxy: https://airflow.services.stellar-ops.com
+  ingress:
+    enabled: true
+    web:
+      annotations:
+        kubernetes.io/ingress.class: private
+      #path: "/"
+      host: airflow.kube001-dev.services.stellar-ops.com
+    flower:
+      annotations:
+        kubernetes.io/ingress.class: private
+      host: flower.airflow.kube001-dev.services.stellar-ops.com
+  
+  # We use external database
+  postgresql:
+    enabled: false
+  
+  externalDatabase:
+    type: postgres
+    host: kube001-dev-shared-pg-rw.c8bv0mxh0nqd.us-east-1.rds.amazonaws.com
+    database: airflow
+    user: airflow
+    passwordSecret: "postgres-creds"
+    passwordSecretKey: "password"
+  
+  redis:
+    existingSecret: redis
+    existingSecretPasswordKey: password
+  
